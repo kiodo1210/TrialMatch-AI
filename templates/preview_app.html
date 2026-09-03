@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrialMatch AI - Precision Matching for Clinical Trials</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1A56DB;
+            --primary-hover: #1E429F;
+            --secondary: #0F172A;
+            --bg-main: #FAFAFA;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+            --text-title: #111827;
+            --text-body: #4B5563;
+            --text-muted: #6B7280;
+            --accent-green: #059669;
+            --accent-red: #DC2626;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-title); overflow-x: hidden; }
+
+        /* HEADER NAVBAR */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 64px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border); z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 48px;
+        }
+        .nav-logo { font-weight: 800; font-size: 20px; color: var(--secondary); letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .nav-menu { display: flex; gap: 32px; font-size: 14px; font-weight: 500; color: var(--text-body); }
+        .nav-menu a { text-decoration: none; color: var(--text-body); transition: color 0.2s; cursor: pointer; }
+        .nav-menu a:hover, .nav-menu a.active { color: var(--primary); font-weight: 600; }
+        .nav-right { display: flex; align-items: center; gap: 16px; }
+        .btn-login { text-decoration: none; color: var(--text-title); font-weight: 600; font-size: 14px; padding: 8px 16px; }
+        .btn-match { background: #000000; color: #FFFFFF; font-weight: 700; font-size: 14px; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-match:hover { background: #1F2937; }
+
+        .view-container { display: none; padding-top: 64px; }
+        .view-container.active { display: block; }
+
+
+        /* 1. LANDING PAGE VIEW */
+        .landing-hero { max-width: 1120px; margin: 60px auto 40px; padding: 0 24px; text-align: center; }
+        .hero-title { font-size: 56px; font-weight: 800; line-height: 1.15; letter-spacing: -1.5px; color: #000000; margin-bottom: 16px; }
+        .hero-title span { color: var(--primary); }
+        .hero-subtitle { font-size: 18px; color: var(--text-body); max-width: 680px; margin: 0 auto 40px; line-height: 1.6; }
+
+        /* FORM CARD */
+        .screening-card {
+            max-width: 540px; margin: 0 auto 60px; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); text-align: left;
+        }
+        .card-header { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; margin-bottom: 24px; color: #111827; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-title); margin-bottom: 8px; }
+        .form-input {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 14px; color: var(--text-title); outline: none; transition: border 0.2s;
+        }
+        .form-input:focus { border-color: var(--primary); }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: white; min-height: 46px; }
+        .tag-pill { background: #E0E7FF; color: #3730A3; font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; }
+        .tag-pill .remove { cursor: pointer; font-weight: bold; }
+        .tag-input { border: none; outline: none; font-size: 13px; flex: 1; min-width: 140px; }
+
+        .btn-analyze {
+            width: 100%; background: #000000; color: #FFFFFF; font-size: 16px; font-weight: 700;
+            padding: 14px; border-radius: 6px; border: none; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;
+        }
+        .btn-analyze:hover { background: #1F2937; }
+
+        /* DATA LOGOS BAR */
+        .data-sources-bar { text-align: center; padding: 32px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: #F9FAFB; }
+        .data-sources-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; }
+        .data-sources-logos { display: flex; justify-content: center; gap: 40px; align-items: center; }
+        .logo-item { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: #374151; }
+        .logo-badge { width: 24px; height: 24px; background: #6B7280; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
+
+        /* WHY TRUST SECTION */
+        .trust-section { max-width: 1120px; margin: 80px auto; padding: 0 24px; text-align: center; }
+        .trust-title { font-size: 28px; font-weight: 800; color: var(--secondary); margin-bottom: 8px; }
+        .trust-desc { font-size: 16px; color: var(--text-body); margin-bottom: 48px; }
+        .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .trust-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px; text-align: left; }
+        .trust-card-full { grid-column: span 2; }
+        .card-icon { width: 36px; height: 36px; background: #F3F4F6; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 16px; }
+        .trust-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #111827; }
+        .trust-card p { font-size: 14px; color: var(--text-body); line-height: 1.6; }
+
+        /* 2. LOADING VIEW */
+        .loading-wrapper {
+            min-height: calc(100vh - 64px); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 40px 24px; background: #FAF9F6;
+        }
+        .loading-card {
+            width: 100%; max-width: 580px; background: white; border: 1px solid var(--border);
+            border-radius: 16px; padding: 40px 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); text-align: center;
+        }
+        .loading-title { font-size: 24px; font-weight: 800; color: #111827; margin-bottom: 8px; }
+        .loading-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 36px; }
+
+        /* CIRCULAR PROGRESS */
+        .progress-circle-container { position: relative; width: 140px; height: 140px; margin: 0 auto 36px; }
+        .progress-svg { transform: rotate(-90deg); width: 140px; height: 140px; }
+        .progress-bg { fill: none; stroke: #E5E7EB; stroke-width: 10; }
+        .progress-bar { fill: none; stroke: var(--primary); stroke-width: 10; stroke-dasharray: 440; stroke-dashoffset: 114; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+        .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .progress-val { font-size: 32px; font-weight: 800; color: #111827; line-height: 1; }
+        .progress-lbl { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; }
+
+        /* STEP LIST */
+        .step-list { text-align: left; margin-bottom: 32px; }
+        .step-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #F3F4F6; }
+        .step-item:last-child { border-bottom: none; }
+        .step-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .step-icon.done { background: var(--primary); color: white; }
+        .step-icon.active { background: #DBEAFE; color: var(--primary); border: 2px solid var(--primary); }
+        .step-icon.wait { background: #F3F4F6; color: #9CA3AF; border: 1px solid #D1D5DB; }
+        .step-text { font-size: 14px; font-weight: 600; color: #111827; flex: 1; }
+        .step-text.wait { color: var(--text-muted); font-weight: 500; }
+        .step-status-tag { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+        .loading-footer-box { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text-body); display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        /* 3. REPORT VIEW */
+        .report-header-bar {
+            background: white; border-bottom: 1px solid var(--border); padding: 16px 48px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .back-link { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text-body); cursor: pointer; text-decoration: none; }
+        .btn-pdf { background: #000000; color: white; font-weight: 700; font-size: 14px; padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+
+        .report-body { max-width: 1120px; margin: 32px auto 80px; padding: 0 24px; }
+        .patient-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .patient-meta { display: flex; align-items: center; gap: 16px; }
+        .patient-avatar { width: 44px; height: 44px; background: #DBEAFE; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        
+        .report-layout-grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
+
+        .sidebar-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; text-align: center; }
+        .score-box { background: var(--primary); color: white; border-radius: 12px; padding: 28px 20px; margin: 16px 0; }
+        .score-num { font-size: 48px; font-weight: 800; line-height: 1; }
+        .score-sub { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; opacity: 0.9; margin-top: 4px; }
+
+        .functional-impact-box { background: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 16px; text-align: left; margin-top: 12px; }
+        .patho-badge { background: #DC2626; color: white; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; float: right; }
+
+        .main-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 28px; }
+        .evidence-box { background: #F9FAFB; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+        .quote-box { background: white; border: 1px solid #E5E7EB; padding: 12px 16px; border-radius: 6px; font-style: italic; font-size: 13px; color: #374151; margin-top: 12px; }
+
+        .matched-trial-item { border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; transition: box-shadow 0.2s; }
+        .matched-trial-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+        .phase-badge { background: #E0E7FF; color: #3730A3; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+        .nct-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--primary); margin-left: 6px; }
+
+        /* FOOTER */
+        .footer { background: white; border-top: 1px solid var(--border); padding: 32px 48px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text-muted); }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; }
+
+        /* CONTACT MODAL */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+            z-index: 9999; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; width: 90%; max-width: 480px; border-radius: 16px;
+            padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative;
+            animation: modalPop 0.2s ease-out;
+        }
+        @keyframes modalPop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .modal-close {
+            position: absolute; top: 20px; right: 20px; font-size: 24px; color: #9CA3AF;
+            cursor: pointer; line-height: 1; border: none; background: none;
+        }
+        .modal-close:hover { color: #111827; }
+        .modal-title { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .modal-desc { font-size: 14px; color: #4B5563; line-height: 1.5; margin-bottom: 24px; }
+        .contact-box {
+            background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
+            padding: 16px 18px; margin-bottom: 24px;
+        }
+        .contact-box-label { font-size: 12px; font-weight: 600; color: #64748B; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .contact-box-val {
+            font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700;
+            color: #1E293B; word-break: break-all;
+        }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-copy {
+            flex: 1; background: #000000; color: white; border: none; padding: 12px;
+            border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s;
+        }
+        .btn-modal-copy:hover { background: #1F2937; }
+        .btn-modal-mail {
+            flex: 1; background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE;
+            padding: 12px; border-radius: 8px; font-weight: 700; font-size: 14px;
+            text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-modal-mail:hover { background: #E0E7FF; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <div class="nav-logo" onclick="switchView('landing')" style="cursor: pointer;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            TrialMatch AI
+        </div>
+        <div class="nav-menu">
+            <a id="nav-platform" class="active" onclick="switchView('landing')">매칭 플랫폼</a>
+            <a id="nav-precision" onclick="switchView('precision')">정밀 AI 기술</a>
+            <a id="nav-insights" onclick="switchView('report')">분석 리포트</a>
+            <a href="/admin/stats" target="_blank" style="color:#2563EB; font-weight:600;">📊 방문자 통계</a>
+            <a onclick="openContactModal()" style="cursor: pointer;">문의하기</a>
+        </div>
+        <div class="nav-right">
+            <a class="btn-login" onclick="alert('SaaS 포털 로그인 시스템')">로그인</a>
+            <button class="btn-match" onclick="switchView('landing')">임상시험 매칭</button>
+        </div>
+    </div>
+
+    <!-- 1. LANDING PAGE VIEW (Platform) -->
+    <div id="view-landing" class="view-container active">
+        <div class="landing-hero">
+            <h1 class="hero-title">정밀 의료를 위한 맞춤형 임상시험 매칭.<br><span>과학에 기반한 AI 솔루션.</span></h1>
+            <p class="hero-subtitle">차세대 유전체(NGS) 데이터 분석을 기반으로, 환자에게 가장 적합한 전 세계 최신 임상시험을 3분 이내에 매칭합니다.</p>
+
+            <div class="screening-card">
+                <div class="card-header" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>📑</span> 환자 스크리닝 시작하기
+                    </div>
+                    <span style="background: #FEF3C7; color: #92400E; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">TCGA / cBioPortal 공공 데이터셋</span>
+                </div>
+
+                <!-- CBIO PORTAL 15 PATIENT SAMPLE SELECTOR -->
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
+                    <label class="form-label" style="color: #1E3A8A; font-weight: 700;">📂 무상 검증용 TCGA / cBioPortal 암 환자 샘플 불러오기 (15종)</label>
+                    <select id="select-cbio-sample" class="form-input" onchange="loadCbioPatientSample(this.value)" style="background: white; border-color: #BFDBFE;">
+                        <option value="">-- 클릭하여 TCGA 암 환자 프로필 선택 (15종 이용 가능) --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">환자 진단 질환 (Disease)</label>
+                    <input type="text" id="input-disease" class="form-input" value="Non-Small Cell Lung Cancer" placeholder="예: 비소세포폐암, 흑색종, 유방암">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">유전자 변이 정보 (Genomic Variants)</label>
+                    <div class="tags-container" id="tags-wrapper">
+                        <span class="tag-pill" data-var="EGFR L858R">EGFR L858R <span class="remove" onclick="removeTag(this)">×</span></span>
+                        <span class="tag-pill" data-var="KRAS G12C">KRAS G12C <span class="remove" onclick="removeTag(this)">×</span></span>
+                        <input type="text" id="input-variant-text" class="tag-input" placeholder="유전자 변이 입력 후 Enter (예: TP53, BRAF V600E)" onkeypress="handleTagInput(event)">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div>
+                        <label class="form-label">임상 병기 (Clinical Stage)</label>
+                        <select id="select-stage" class="form-input">
+                            <option value="">병기 선택</option>
+                            <option value="Stage I">Stage I (초기 암)</option>
+                            <option value="Stage II">Stage II (국소 진행성 암)</option>
+                            <option value="Stage III">Stage III (진행성 암)</option>
+                            <option value="Stage IV" selected>Stage IV (전이성 / 먼곳 전이)</option>
+                            <option value="Recurrent">재발성 / 난치성 (Recurrent/Refractory)</option>
+                            <option value="All Stages">전 병기 대상 (바스켓 임상 / 조직불문)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">담당의 이메일 (Contact Email)</label>
+                        <input type="email" id="input-email" class="form-input" value="oncologist@clinic.org">
+                    </div>
+                </div>
+
+                <button class="btn-analyze" onclick="startRealMatchWorkflow()">
+                    임상시험 실시간 매칭 분석 🚀
+                </button>
+            </div>
+
+        </div>
+
+        <div class="data-sources-bar">
+            <div class="data-sources-title">전 세계 정밀 종양학 바이오 데이터 실시간 연동</div>
+            <div class="data-sources-logos">
+                <div class="logo-item"><span class="logo-badge">A</span> AlphaGenome (딥러닝)</div>
+                <div class="logo-item"><span class="logo-badge">O</span> OpenTargets (표적약물)</div>
+                <div class="logo-item"><span class="logo-badge">C</span> ClinicalTrials.gov (미국보건원)</div>
+            </div>
+        </div>
+
+        <div class="trust-section">
+            <h2 class="trust-title">글로벌 의료진이 TrialMatch AI를 신뢰하는 이유</h2>
+            <p class="trust-desc">복잡한 유전체 분석 데이터와 실시간 환자 임상 참여 사이의 장벽을 해결합니다.</p>
+
+            <div class="trust-grid">
+                <div class="trust-card">
+                    <div class="card-icon">🧬</div>
+                    <h3>NGS 유전체 변이 심층 분석</h3>
+                    <p>AI가 복잡한 유전자 변이 리포트를 정밀 분석하여, 수동 검색에서 놓치기 쉬운 동반 변이(Co-mutations) 및 희귀 융합 유전자를 탐지합니다. FoundationOne, Guardant360, Tempus 서식을 모두 지원합니다.</p>
+                </div>
+                <div class="trust-card">
+                    <div class="card-icon">⚡</div>
+                    <h3>3분 이내 실시간 매칭</h3>
+                    <p>임상시험 타당성 검토에 소요되는 시간을 몇 시간에서 단 몇 초로 단축합니다. 실시간 수집 엔진이 전 세계 40,000개 이상의 활성 암 임상시험을 매일 모니터링합니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1-B. PRECISION AI TECHNOLOGY VIEW -->
+    <div id="view-precision" class="view-container">
+        <div style="max-width: 1120px; margin: 40px auto; padding: 0 24px;">
+            <div style="text-align: center; margin-bottom: 48px;">
+                <span style="background: #E0E7FF; color: #3730A3; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 20px; font-family: 'JetBrains Mono', monospace;">Google DeepMind Science Skills Engine</span>
+                <h1 style="font-size: 42px; font-weight: 800; color: #111827; margin: 16px 0 12px;">정밀 AI 아키텍처 (Precision AI)</h1>
+                <p style="font-size: 18px; color: var(--text-body); max-width: 720px; margin: 0 auto;">TrialMatch AI가 어떻게 미지의 변이(VUS)를 분석하고, 약물 표적 기전을 매핑하며, 환각 없는 임상 매칭을 보장하는지 확인하세요.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px;">
+                <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px;">
+                    <div style="width: 44px; height: 44px; background: #DBEAFE; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 20px;">🧬</div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 12px;">1. 알파지놈(AlphaGenome) 예측기</h3>
+                    <p style="font-size: 14px; color: var(--text-body); line-height: 1.6;">ClinVar DB에 분류되지 않은 미지의 유전자 변이(VUS)와 RNA 스플라이싱 변형 영향력을 딥러닝으로 정확히 예측합니다.</p>
+                </div>
+
+                <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px;">
+                    <div style="width: 44px; height: 44px; background: #ECFDF5; color: #047857; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 20px;">🎯</div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 12px;">2. 오픈타겟(OpenTargets) 엔진</h3>
+                    <p style="font-size: 14px; color: var(--text-body); line-height: 1.6;">유전자 변이 표적과 치료 약물의 작용 기전(MoA) 프로필을 직접 연결하여 최고의 치료 옵션을 매핑합니다.</p>
+                </div>
+
+                <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 32px;">
+                    <div style="width: 44px; height: 44px; background: #FEF3C7; color: #92400E; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 20px;">🛡️</div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 12px;">3. 확정적 검증 가드레일</h3>
+                    <p style="font-size: 14px; color: var(--text-body); line-height: 1.6;">미국 보건원(ClinicalTrials.gov) 실시간 REST API와 100% 교차 검증하여 임상 번호(NCT ID)와 모집 상태의 AI 환각(Hallucination)을 완벽 차단합니다.</p>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <button class="btn-analyze" style="max-width: 320px; margin: 0 auto;" onclick="switchView('landing')">
+                    실시간 환자 스크리닝 시작 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. LIVE LOADING VIEW -->
+    <div id="view-loading" class="view-container">
+        <div class="loading-wrapper">
+            <div class="loading-card">
+                <h2 class="loading-title">유전체 프로필 분석 중...</h2>
+                <p class="loading-sub">TrialMatch AI가 전 세계 40,000개 이상의 임상시험 데이터를 탐색하여 최적의 임상을 찾고 있습니다.</p>
+
+                <!-- 74% PROGRESS CIRCLE -->
+                <div class="progress-circle-container">
+                    <svg class="progress-svg">
+                        <circle class="progress-bg" cx="70" cy="70" r="55"></circle>
+                        <circle class="progress-bar" cx="70" cy="70" r="55"></circle>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-val">74%</div>
+                        <div class="progress-lbl">분석 진행 중</div>
+                    </div>
+                </div>
+
+                <!-- STEPS STATUS LIST -->
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-icon done">✓</div>
+                        <div class="step-text">환자 유전체 변이 리포트 추출 완료...</div>
+                        <span class="step-status-tag" style="color: #6B7280;">완료</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-icon active">🧬</div>
+                        <div class="step-text">AlphaGenome 기반 병원성(Pathogenicity) 예측 중...</div>
+                        <span class="step-status-tag" style="color: var(--primary);">진행 중</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-icon wait">⃝</div>
+                        <div class="step-text wait">OpenTargets 연동 약물 표적 기전 대조 중...</div>
+                        <span class="step-status-tag" style="color: #9CA3AF;">대기</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-icon wait">⃝</div>
+                        <div class="step-text wait">ClinicalTrials.gov 미국보건원 실시간 모집 프로토콜 스캔 중...</div>
+                        <span class="step-status-tag" style="color: #9CA3AF;">대기</span>
+                    </div>
+                </div>
+
+                <div class="loading-footer-box">
+                    <span>📄</span> 백그라운드 정밀 PDF 리포트 자동 생성 중 <span style="letter-spacing: 2px;">...</span>
+                </div>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 24px;">본 분석은 미국 FDA Title 21 CFR Part 11 전자 기록 규정 가이드라인을 준수합니다.</p>
+        </div>
+    </div>
+
+    <!-- 3. ANALYSIS REPORT VIEW -->
+    <div id="view-report" class="view-container">
+        <div class="report-header-bar">
+            <a class="back-link" onclick="switchView('landing')">← 새로운 분석으로 돌아가기</a>
+            <button class="btn-pdf" id="btn-download-pdf-real">
+                📥 정밀 PDF 매칭 리포트 다운로드
+            </button>
+        </div>
+
+        <div class="report-body">
+            <!-- PATIENT SUMMARY CARD -->
+            <div class="patient-card">
+                <div class="patient-meta">
+                    <div class="patient-avatar">👤</div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">환자 프로필 번호 #TM-9921</div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #111827;" id="report-patient-disease">Non-Small Cell Lung Cancer (NSCLC)</h2>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <div style="background: #F3F4F6; padding: 8px 16px; border-radius: 8px; text-align: right;">
+                        <div style="font-size: 10px; font-weight: 700; color: var(--text-muted);">바이오마커 변이</div>
+                        <div style="font-size: 15px; font-weight: 800; color: var(--primary); font-family: 'JetBrains Mono', monospace;" id="report-biomarker-var">EGFR L858R</div>
+                    </div>
+                    <div style="background: #ECFDF5; padding: 8px 16px; border-radius: 8px; text-align: right;">
+                        <div style="font-size: 10px; font-weight: 700; color: #065F46;">분석 상태</div>
+                        <div style="font-size: 15px; font-weight: 800; color: #047857;">✓ 분석 완료</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-layout-grid">
+                <!-- LEFT SIDEBAR -->
+                <div>
+                    <!-- MATCH PROBABILITY -->
+                    <div class="sidebar-card">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">임상 매칭 적합도</div>
+                        <div class="score-box">
+                            <div class="score-num">94%</div>
+                            <div class="score-sub">최고 정밀도 매칭</div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-body); font-weight: 500;">표적 치료제 임상 프로토콜에 매우 높은 적합성을 보임</p>
+                    </div>
+
+                    <!-- FUNCTIONAL IMPACT -->
+                    <div class="sidebar-card" style="text-align: left;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">🧪 생물학적 기능 변형 평가</div>
+                        
+                        <div class="functional-impact-box">
+                            <span class="patho-badge">PATHOGENIC (병원성)</span>
+                            <div style="font-size: 13px; font-weight: 700; color: #991B1B; margin-bottom: 4px;">AlphaGenome 예측 결과</div>
+                            <p style="font-size: 12px; color: #7F1D1D; line-height: 1.5;" id="report-patho-prediction">키나아제 도메인의 아미노산 치환이 지속적인 효소 활성화를 유도하는 구조적 위험성이 확인되었습니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT MAIN CONTENT -->
+                <div>
+                    <div class="main-card">
+                        <!-- RATIONALE -->
+                        <div class="evidence-box">
+                            <div style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <span>📄</span> 매칭 타당성 근거 및 논문 데이터
+                            </div>
+                            <p style="font-size: 14px; color: #1F2937; line-height: 1.6;">
+                                확인된 변이는 암 발병 드라이버 변이에 해당합니다. <code style="background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">OpenTargets</code> 임상 데이터에 따르면 해당 표적 치료제에 대한 민감성이 매우 높습니다.
+                            </p>
+                            <div class="quote-box">
+                                "야생형(Wild-type) 대비 키나아제 촉매 활성이 유의미하게 증가하여 활성 구조를 선호함." — <b>PubMed 학술 논문 근거</b>
+                            </div>
+                        </div>
+
+                        <!-- MATCHED TRIALS LIST -->
+                        <div style="font-size: 14px; font-weight: 800; color: var(--secondary); margin-bottom: 16px; display: flex; justify-content: space-between;">
+                            <span>추천 최우선 글로벌 임상시험 (Top Matches)</span>
+                            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">매칭 점수순 정렬</span>
+                        </div>
+
+                        <div id="report-trials-container">
+                            <!-- Dynamic trials inserted by JS -->
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <div><b>TrialMatch AI</b> &nbsp;© 2026 TrialMatch AI. Clinical Rigor. Computational Precision.</div>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">FDA Compliance</a>
+            <a href="#">Data Security</a>
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-menu a').forEach(el => el.classList.remove('active'));
+
+            const targetView = document.getElementById('view-' + viewId);
+            if (targetView) targetView.classList.add('active');
+
+            if (viewId === 'landing' && document.getElementById('nav-platform')) {
+                document.getElementById('nav-platform').classList.add('active');
+            } else if (viewId === 'precision' && document.getElementById('nav-precision')) {
+                document.getElementById('nav-precision').classList.add('active');
+            } else if (viewId === 'report' && document.getElementById('nav-insights')) {
+                document.getElementById('nav-insights').classList.add('active');
+            }
+            window.scrollTo(0, 0);
+        }
+
+
+        function removeTag(el) {
+            el.parentElement.remove();
+        }
+
+        function handleTagInput(e) {
+            if (e.key === 'Enter' && e.target.value.trim() !== '') {
+                e.preventDefault();
+                const val = e.target.value.trim();
+                const wrapper = document.getElementById('tags-wrapper');
+                const span = document.createElement('span');
+                span.className = 'tag-pill';
+                span.setAttribute('data-var', val);
+                span.innerHTML = `${val} <span class="remove" onclick="removeTag(this)">×</span>`;
+                wrapper.insertBefore(span, e.target);
+                e.target.value = '';
+            }
+        }
+
+        let cbioPatientsData = [];
+
+        async function initCbioDatasets() {
+            try {
+                const res = await fetch('/api/v1/cbio-patients');
+                const data = await res.json();
+                cbioPatientsData = data.patients || [];
+                const selectEl = document.getElementById('select-cbio-sample');
+                if (selectEl) {
+                    cbioPatientsData.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.patient_id;
+                        opt.innerText = `[${p.patient_id}] ${p.disease} (${p.gene_variant})`;
+                        selectEl.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load cBioPortal datasets", err);
+            }
+        }
+
+        function loadCbioPatientSample(patientId) {
+            if (!patientId) return;
+            const p = cbioPatientsData.find(item => item.patient_id === patientId);
+            if (!p) return;
+
+            document.getElementById('input-disease').value = p.disease;
+            document.getElementById('select-stage').value = p.clinical_stage;
+
+            // Fill tags
+            const wrapper = document.getElementById('tags-wrapper');
+            wrapper.querySelectorAll('.tag-pill').forEach(el => el.remove());
+            const textInput = document.getElementById('input-variant-text');
+
+            const vars = p.gene_variant.split(',');
+            vars.forEach(v => {
+                const val = v.trim();
+                const span = document.createElement('span');
+                span.className = 'tag-pill';
+                span.setAttribute('data-var', val);
+                span.innerHTML = `${val} <span class="remove" onclick="removeTag(this)">×</span>`;
+                wrapper.insertBefore(span, textInput);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initCbioDatasets();
+        });
+
+        function getVariantList() {
+            const pills = document.querySelectorAll('#tags-wrapper .tag-pill');
+            const vars = [];
+            pills.forEach(p => vars.push(p.getAttribute('data-var')));
+            return vars.length > 0 ? vars.join(', ') : 'EGFR L858R';
+        }
+
+
+        async function startRealMatchWorkflow() {
+            const disease = document.getElementById('input-disease').value || 'Non-Small Cell Lung Cancer';
+            const variants = getVariantList();
+            const stage = document.getElementById('select-stage').value || 'Stage IV';
+
+            switchView('loading');
+
+            const formData = new FormData();
+            formData.append('disease_name', disease);
+            formData.append('gene_variant', variants);
+            formData.append('clinical_stage', stage);
+
+            try {
+                const response = await fetch('/api/v1/run-pipeline-direct', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                // Update Report View Elements
+                document.getElementById('report-patient-disease').innerText = `${result.disease} (${result.clinical_stage})`;
+                document.getElementById('report-biomarker-var').innerText = result.gene_variant;
+                document.getElementById('report-patho-prediction').innerText = result.variant_pathogenicity;
+
+                const trialsContainer = document.getElementById('report-trials-container');
+                trialsContainer.innerHTML = '';
+
+                if (result.recommended_trials && result.recommended_trials.length > 0) {
+                    result.recommended_trials.forEach(t => {
+                        const trialHtml = `
+                            <div class="matched-trial-item">
+                                <div style="flex: 1; padding-right: 16px;">
+                                    <div style="margin-bottom: 4px;">
+                                        <span class="phase-badge">${t.phase}</span>
+                                        <span class="nct-num">${t.nct_id}</span>
+                                    </div>
+                                    <div style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 6px;">${t.title}</div>
+                                    <div style="font-size: 13px; color: var(--text-muted);">
+                                        📍 ${t.location} &nbsp;|&nbsp; 🟢 ${t.status}
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 12px; color: #4B5563; background: #F3F4F6; padding: 6px 10px; border-radius: 4px;">
+                                        <b>Rationale:</b> ${t.match_rationale}
+                                    </div>
+                                </div>
+                                <div style="background: #F3F4F6; padding: 12px 20px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 10px; font-weight: 700; color: var(--text-muted);">SCORE</div>
+                                    <div style="font-size: 20px; font-weight: 800; color: var(--primary);">${t.score || 95}%</div>
+                                </div>
+                            </div>
+                        `;
+                        trialsContainer.innerHTML += trialHtml;
+                    });
+                }
+
+                // Setup PDF download button
+                const pdfBtn = document.getElementById('btn-download-pdf-real');
+                const cleanVar = result.gene_variant.replace(/ /g, '_').replace(/,/g, '_');
+                pdfBtn.onclick = () => window.open(`/api/v1/download-report/task_${cleanVar}`);
+
+                setTimeout(() => {
+                    switchView('report');
+                }, 1500);
+
+            } catch (err) {
+                console.error(err);
+                alert("매칭 파이프라인 연동에 실패했습니다. 다시 시도해 주세요.");
+                switchView('landing');
+            }
+        }
+
+        // Contact Modal Functions
+        function openContactModal() {
+            document.getElementById('contact-modal').classList.add('active');
+        }
+        function closeContactModal(e) {
+            if (!e || e.target === document.getElementById('contact-modal') || e.target.classList.contains('modal-close')) {
+                document.getElementById('contact-modal').classList.remove('active');
+            }
+        }
+        function copyContactEmail() {
+            const email = document.getElementById('contact-email-text').innerText;
+            navigator.clipboard.writeText(email).then(() => {
+                const btn = document.getElementById('btn-copy-email');
+                btn.innerHTML = "<span>✅</span> 복사 완료!";
+                setTimeout(() => {
+                    btn.innerHTML = "<span>📋</span> 이메일 복사하기";
+                }, 2000);
+            }).catch(() => {
+                prompt("이메일 주소를 복사하세요:", email);
+            });
+        }
+    </script>
+
+    <!-- CONTACT MODAL -->
+    <div id="contact-modal" class="modal-overlay" onclick="closeContactModal(event)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeContactModal()">&times;</button>
+            <div class="modal-title">
+                <span>✉️</span> 문의 및 파트너십 안내
+            </div>
+            <p class="modal-desc">
+                TrialMatch AI 서비스 도입, B2B 제휴, 연구 협력에 대한 문의는 아래 담당자 이메일로 연락주시면 신속하게 답변해 드립니다.
+            </p>
+            <div class="contact-box">
+                <div class="contact-box-label">공식 담당자 이메일</div>
+                <div class="contact-box-val" id="contact-email-text">kaylee12102@gmail.com</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal-copy" onclick="copyContactEmail()" id="btn-copy-email">
+                    <span>📋</span> 이메일 복사하기
+                </button>
+                <a href="mailto:kaylee12102@gmail.com?subject=[TrialMatch AI] 도입 및 파트너십 문의" class="btn-modal-mail">
+                    <span>✉️</span> 메일 바로 보내기
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

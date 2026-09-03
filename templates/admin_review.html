@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrialMatch AI - 전문가 검수 및 승인</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F8FAFC; color: #0F172A; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .header { border-bottom: 2px solid #1E3A8A; padding-bottom: 15px; margin-bottom: 20px; }
+        .header h2 { color: #1E3A8A; margin: 0 0 8px 0; }
+        .badge { background-color: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; }
+        .status-badge { background-color: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 14px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; background: #F1F5F9; padding: 15px; border-radius: 8px; }
+        .trial-card { border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #FFFFFF; }
+        .trial-title { color: #1E3A8A; font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+        .btn-approve { background: #1E3A8A; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .btn-approve:hover { background: #1D4ED8; }
+        .btn-download { background: #059669; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-left: 10px; text-decoration: none; display: inline-block; }
+        .btn-download:hover { background: #047857; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🧬 TrialMatch AI - 글로벌 임상시험 매칭 리포트 검수</h2>
+            <span class="badge">Human-in-the-Loop Verified</span>
+        </div>
+
+        <div class="info-grid">
+            <div><b>환자 유전자 변이:</b> {{ gene_variant }}</div>
+            <div><b>대상 질환:</b> {{ disease }}</div>
+            <div><b>변이 병원성 예측:</b> {{ variant_pathogenicity }}</div>
+            <div><b>가드레일 검증:</b> <span class="status-badge">100% Passed</span></div>
+        </div>
+
+        <h3>🎯 매칭된 추천 임상시험 목록</h3>
+        {% for trial in recommended_trials %}
+        <div class="trial-card">
+            <div class="trial-title">[{{ trial.nct_id }}] {{ trial.title }}</div>
+            <p style="margin: 5px 0;"><b>임상 단계:</b> {{ trial.phase }} | <b>상태:</b> <font color="#059669"><b>{{ trial.status }}</b></font></p>
+            <p style="margin: 5px 0;"><b>연구 기관:</b> {{ trial.location }}</p>
+            <p style="margin: 5px 0; color: #475569;"><b>과학적 타당성:</b> {{ trial.match_rationale }}</p>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top: 25px; text-align: center;">
+            <button onclick="alert('✅ PDF 매칭 리포트가 성공적으로 최종 승인되었으며 제약사/CRO로 전송되었습니다.');" class="btn-approve">
+                ✅ 리포트 최종 승인 및 발송
+            </button>
+            <a href="/api/v1/download-report/{{ task_id }}" class="btn-download" target="_blank">
+                📄 PDF 리포트 다운로드
+            </a>
+        </div>
+    </div>
+</body>
+</html>

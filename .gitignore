@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+.agent/
+reports/*.pdf
+.DS_Store
